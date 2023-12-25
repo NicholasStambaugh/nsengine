@@ -1,3 +1,4 @@
+use minifb::{Key, Window, WindowOptions};
 use std::io::{self, Write};
 
 #[derive(Clone)]
@@ -25,26 +26,27 @@ impl Canvas {
         }
     }
 
-    fn render(&self) {
-        // Render the canvas to the console
+    fn render(&self, buffer: &mut Vec<u32>) {
+        // Render the canvas to the buffer
         for row in &self.pixels {
             for pixel in row {
-                print!(
-                    "\x1b[38;2;{};{};{}m█\x1b[0m",
-                    pixel.r, pixel.g, pixel.b
-                );
+                let color = (pixel.r as u32) << 16 | (pixel.g as u32) << 8 | pixel.b as u32;
+                buffer.push(color);
             }
-            println!(); // Move to the next row
         }
     }
 }
 
 fn main() {
-    let mut canvas = Canvas::new(40, 20);
+    let width = 40;
+    let height = 20;
+
+    let mut canvas = Canvas::new(width, height);
+    let mut buffer: Vec<u32> = Vec::new();
 
     // Draw a simple red rectangle
-    for x in 5..15 {
-        for y in 5..15 {
+    for x in 5..35 {
+        for y in 5..35 {
             canvas.set_pixel(x, y, Pixel { r: 255, g: 0, b: 0 });
         }
     }
@@ -54,12 +56,28 @@ fn main() {
         canvas.set_pixel(x, 10, Pixel { r: 0, g: 255, b: 0 });
     }
 
-    // Render the canvas
-    canvas.render();
+    // Set up the window
+    let mut window = Window::new(
+        "Rust 2D Graphics",
+        width,
+        height,
+        WindowOptions {
+            resize: true,
+            ..WindowOptions::default()
+        },
+    )
+    .unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
 
-    // Wait for user input before exiting
-    let mut input = String::new();
-    print!("Press Enter to exit...");
-    io::stdout().flush().unwrap();
-    io::stdin().read_line(&mut input).unwrap();
+    // Main loop
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        buffer.clear();
+        canvas.render(&mut buffer);
+        window
+            .update_with_buffer(&buffer, width, height)
+            .unwrap_or_else(|e| {
+                panic!("{}", e);
+            });
+    }
 }
