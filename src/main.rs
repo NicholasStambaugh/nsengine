@@ -38,23 +38,11 @@ impl Canvas {
 }
 
 fn main() {
-    let width = 40;
-    let height = 20;
+    let width = 1000;
+    let height = 1080;
 
     let mut canvas = Canvas::new(width, height);
     let mut buffer: Vec<u32> = Vec::new();
-
-    // Draw a simple red rectangle
-    for x in 5..35 {
-        for y in 5..35 {
-            canvas.set_pixel(x, y, Pixel { r: 255, g: 0, b: 0 });
-        }
-    }
-
-    // Draw a green line
-    for x in 5..35 {
-        canvas.set_pixel(x, 10, Pixel { r: 0, g: 255, b: 0 });
-    }
 
     // Set up the window
     let mut window = Window::new(
@@ -70,8 +58,29 @@ fn main() {
         panic!("{}", e);
     });
 
+    let mut cursor_x = width / 2;
+    let mut cursor_y = height / 2;
+
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        // Handle user input
+        if window.is_key_down(Key::Right) && cursor_x < width - 1 {
+            cursor_x += 1;
+        }
+        if window.is_key_down(Key::Left) && cursor_x > 0 {
+            cursor_x -= 1;
+        }
+        if window.is_key_down(Key::Down) && cursor_y < height - 1 {
+            cursor_y += 1;
+        }
+        if window.is_key_down(Key::Up) && cursor_y > 0 {
+            cursor_y -= 1;
+        }
+
+        // Draw on the canvas based on user input
+        canvas.set_pixel(cursor_x, cursor_y, Pixel { r: 255, g: 255, b: 255 });
+
+        // Render and update the window
         buffer.clear();
         canvas.render(&mut buffer);
         window
